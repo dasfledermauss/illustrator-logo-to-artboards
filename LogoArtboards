@@ -1,0 +1,436 @@
+// =============================================================
+// GERADOR DE PRANCHETAS DE LOGO POR COR
+// Versão: 1.0
+// Compatível com: Adobe Illustrator CS6+
+//
+// Como usar:
+//  1. Abra o documento com os assets do logo (cada asset
+//     deve ser um grupo ou path separado, em camadas distintas
+//     ou como itens de nível superior no documento)
+//  2. Execute o script via Arquivo > Scripts > Outro Script...
+//  3. Configure os assets, cores e opções na janela
+//  4. Clique em "Gerar Pranchetas"
+//
+// Resultado:
+//  - Uma prancheta por cor por asset, nomeada: Cor_Asset
+//  - Layout em grade: cada linha = uma cor, cada coluna = um asset
+//  - Prancheta do tamanho exato do asset + padding
+// =============================================================
+
+#target illustrator
+
+(function () {
+
+    // ── UTILITÁRIOS ──────────────────────────────────────────────
+
+    function trim(s) {
+        return String(s).replace(/^\s+|\s+$/g, "");
+    }
+
+    function slugify(str) {
+        return trim(str)
+            .replace(/\s+/g, "_")
+            .replace(/[^a-zA-Z0-9_\-áéíóúâêîôûãõàèìòùäëïöüçÁÉÍÓÚÂÊÎÔÛÃÕÀÈÌÒÙÄËÏÖÜÇ]/g, "");
+    }
+
+    function hexToRGB(hex) {
+        hex = trim(hex).replace(/^#/, "");
+        if (hex.length === 3) {
+            hex = hex[0]+hex[0] + hex[1]+hex[1] + hex[2]+hex[2];
+        }
+        if (hex.length !== 6) return null;
+        var r = parseInt(hex.substr(0,2), 16);
+        var g = parseInt(hex.substr(2,2), 16);
+        var b = parseInt(hex.substr(4,2), 16);
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+        return { red: r, green: g, blue: b };
+    }
+
+    function makeRGBColor(r, g, b) {
+        var c = new RGBColor();
+        c.red = r; c.green = g; c.blue = b;
+        return c;
+    }
+
+    function makeCMYKColor(c, m, y, k) {
+        var col = new CMYKColor();
+        col.cyan = c; col.magenta = m; col.yellow = y; col.black = k;
+        return col;
+    }
+
+    // Aplica cor a todos os paths dentro de um item (recursivo)
+    function applyColorToItem(item, fillColor, strokeColor, mode) {
+        // mode: "fill_only" | "stroke_only" | "both"
+        if (item.typename === "GroupItem") {
+            for (var i = 0; i < item.pageItems.length; i++) {
+                applyColorToItem(item.pageItems[i], fillColor, strokeColor, mode);
+            }
+        } else if (item.typename === "PathItem") {
+            if ((mode === "fill_only" || mode === "both") && item.filled) {
+                try { item.fillColor = fillColor; } catch(e) {}
+            }
+            if ((mode === "stroke_only" || mode === "both") && item.stroked) {
+                try { item.strokeColor = strokeColor || fillColor; } catch(e) {}
+            }
+        } else if (item.typename === "CompoundPathItem") {
+            for (var i = 0; i < item.pathItems.length; i++) {
+                if ((mode === "fill_only" || mode === "both")) {
+                    try { item.pathItems[i].fillColor = fillColor; } catch(e) {}
+                }
+                if ((mode === "stroke_only" || mode === "both") && item.pathItems[i].stroked) {
+                    try { item.pathItems[i].strokeColor = strokeColor || fillColor; } catch(e) {}
+                }
+            }
+        } else if (item.typename === "TextFrame") {
+            try {
+                item.textRange.characterAttributes.fillColor = fillColor;
+            } catch(e) {}
+        }
+    }
+
+    // ── VERIFICAÇÕES ─────────────────────────────────────────────
+
+    if (app.documents.length === 0) {
+        alert("Erro: Nenhum documento aberto.\nAbra o arquivo com os assets do logo e tente novamente.");
+        return;
+    }
+
+    var doc = app.activeDocument;
+
+    // Coleta todos os itens de nível superior de todas as camadas
+    var topItems = [];
+    for (var li = 0; li < doc.layers.length; li++) {
+        var layer = doc.layers[li];
+        if (!layer.visible) continue;
+        for (var pi = 0; pi < layer.pageItems.length; pi++) {
+            topItems.push({
+                item: layer.pageItems[pi],
+                layerName: layer.name
+            });
+        }
+    }
+
+    if (topItems.length === 0) {
+        alert("Nenhum item encontrado.\nVerifique se as camadas estão visíveis e contêm os assets.");
+        return;
+    }
+
+    // ── JANELA DE DIÁLOGO ─────────────────────────────────────────
+
+    var dlg = new Window("dialog", "Gerador de Pranchetas de Logo por Cor  |  v1.0");
+    dlg.orientation = "column";
+    dlg.alignChildren = ["fill", "top"];
+    dlg.spacing = 14;
+    dlg.margins = [20, 16, 20, 20];
+    dlg.preferredSize.width = 600;
+
+    // ── Seção: Assets ─────────────────────────────────────────────
+
+    var assetsPanel = dlg.add("panel", undefined, "  Assets do Logo  ");
+    assetsPanel.orientation = "column";
+    assetsPanel.alignChildren = ["fill", "top"];
+    assetsPanel.margins = [12, 16, 12, 12];
+    assetsPanel.spacing = 5;
+
+    var assetHeaderGroup = assetsPanel.add("group");
+    assetHeaderGroup.orientation = "row";
+    assetHeaderGroup.add("statictext", [0,0,24,16], "✓");
+    assetHeaderGroup.add("statictext", [0,0,160,16], "Nome na prancheta");
+    assetHeaderGroup.add("statictext", [0,0,200,16], "Item no documento");
+
+    var assetRows = [];
+
+    for (var i = 0; i < topItems.length; i++) {
+        var ti = topItems[i];
+        var row = assetsPanel.add("group");
+        row.orientation = "row";
+        row.alignChildren = ["left", "center"];
+        row.spacing = 8;
+
+        var cb = row.add("checkbox", [0,0,24,16], "");
+        cb.value = true;
+
+        // Tenta usar o nome do item; se vazio, usa o nome da camada
+        var defaultName = "";
+        if (ti.item.name && trim(ti.item.name) !== "" &&
+            trim(ti.item.name) !== "<Caminho>" &&
+            trim(ti.item.name) !== "<Grupo>" &&
+            trim(ti.item.name).indexOf("<") !== 0) {
+            defaultName = trim(ti.item.name);
+        } else if (ti.layerName && trim(ti.layerName) !== "") {
+            defaultName = trim(ti.layerName);
+        } else {
+            defaultName = "asset_" + (i + 1);
+        }
+
+        var nameEdit = row.add("edittext", [0,0,160,20], defaultName);
+
+        var desc = ti.item.typename;
+        if (ti.item.typename === "GroupItem") desc = "Grupo (" + ti.item.pageItems.length + " itens)";
+        if (ti.item.typename === "PathItem")  desc = "Path";
+        if (ti.item.typename === "CompoundPathItem") desc = "Compound Path";
+        var descLabel = row.add("statictext", [0,0,220,16], desc + "  —  camada: \"" + ti.layerName + "\"");
+
+        assetRows.push({ checkbox: cb, nameEdit: nameEdit, item: ti.item });
+    }
+
+    // ── Seção: Cores ──────────────────────────────────────────────
+
+    var colorsPanel = dlg.add("panel", undefined, "  Variantes de Cor  ");
+    colorsPanel.orientation = "column";
+    colorsPanel.alignChildren = ["fill", "top"];
+    colorsPanel.margins = [12, 16, 12, 12];
+    colorsPanel.spacing = 6;
+
+    var noteGrp = colorsPanel.add("group");
+    noteGrp.orientation = "row";
+    noteGrp.alignChildren = ["left", "center"];
+    var note = noteGrp.add("statictext", undefined,
+        "Cor em HEX: #003DA5   |   Cor em CMYK: C,M,Y,K (0–100)   |   Ex: 100,50,0,0");
+    note.graphics.foregroundColor = note.graphics.newPen(
+        note.graphics.PenType.SOLID_COLOR, [0.45, 0.45, 0.45, 1], 1);
+
+    var colorHeader = colorsPanel.add("group");
+    colorHeader.orientation = "row";
+    colorHeader.spacing = 8;
+    colorHeader.add("statictext", [0,0,150,16], "Nome da cor");
+    colorHeader.add("statictext", [0,0,170,16], "Valor (#HEX ou C,M,Y,K)");
+    colorHeader.add("statictext", [0,0,80,16], "Aplicar em");
+
+    var colorContainer = colorsPanel.add("group");
+    colorContainer.orientation = "column";
+    colorContainer.alignChildren = ["fill", "top"];
+    colorContainer.spacing = 4;
+
+    var colorRows = [];
+
+    function addColorRow(defaultName, defaultVal, defaultMode) {
+        var row = colorContainer.add("group");
+        row.orientation = "row";
+        row.alignChildren = ["left", "center"];
+        row.spacing = 8;
+
+        var nEd = row.add("edittext", [0,0,150,20], defaultName || "");
+        nEd.helpTip = "Nome da cor (aparecerá no nome da prancheta)";
+
+        var vEd = row.add("edittext", [0,0,170,20], defaultVal || "");
+        vEd.helpTip = "Ex: #003DA5  ou  100,50,0,0";
+
+        var modeList = row.add("dropdownlist", [0,0,120,20], ["Fill e Stroke", "Somente Fill", "Somente Stroke"]);
+        modeList.selection = defaultMode !== undefined ? defaultMode : 0;
+
+        var delBtn = row.add("button", [0,0,26,20], "✕");
+
+        var entry = { nameEdit: nEd, valueEdit: vEd, modeList: modeList, row: row, active: true };
+        colorRows.push(entry);
+
+        delBtn.onClick = function () {
+            entry.active = false;
+            row.visible = false;
+        };
+
+        return entry;
+    }
+
+    // Defaults
+    addColorRow("Preto",         "0,0,0,100",   1);
+    addColorRow("Branco",        "0,0,0,0",     1);
+    addColorRow("Cor_Principal", "#003DA5",     0);
+
+    var addColorBtn = colorsPanel.add("button", undefined, "+ Adicionar Variante de Cor");
+    addColorBtn.alignment = "left";
+    addColorBtn.onClick = function () {
+        addColorRow("", "", 0);
+        dlg.layout.layout(true);
+        dlg.layout.resize();
+    };
+
+    // ── Seção: Opções ─────────────────────────────────────────────
+
+    var optsPanel = dlg.add("panel", undefined, "  Opções de Layout  ");
+    optsPanel.orientation = "row";
+    optsPanel.alignChildren = ["left", "center"];
+    optsPanel.margins = [12, 16, 12, 12];
+    optsPanel.spacing = 20;
+
+    var paddingGrp = optsPanel.add("group");
+    paddingGrp.add("statictext", undefined, "Padding (px):");
+    var paddingEdit = paddingGrp.add("edittext", [0,0,55,20], "20");
+    paddingEdit.helpTip = "Espaço entre o asset e a borda da prancheta";
+
+    var spacingGrp = optsPanel.add("group");
+    spacingGrp.add("statictext", undefined, "Espaço entre pranchetas (px):");
+    var spacingEdit = spacingGrp.add("edittext", [0,0,55,20], "40");
+
+    // ── Botões ────────────────────────────────────────────────────
+
+    var btnGroup = dlg.add("group");
+    btnGroup.orientation = "row";
+    btnGroup.alignment = "right";
+    btnGroup.spacing = 10;
+    btnGroup.margins = [0, 6, 0, 0];
+
+    var cancelBtn = btnGroup.add("button", undefined, "Cancelar", { name: "cancel" });
+    cancelBtn.preferredSize.width = 90;
+
+    var okBtn = btnGroup.add("button", undefined, "▶  Gerar Pranchetas", { name: "ok" });
+    okBtn.preferredSize.width = 160;
+
+    cancelBtn.onClick = function () { dlg.close(); };
+
+    // ── PROCESSAMENTO ─────────────────────────────────────────────
+
+    okBtn.onClick = function () {
+
+        // Valida assets
+        var selectedAssets = [];
+        for (var i = 0; i < assetRows.length; i++) {
+            var ar = assetRows[i];
+            if (!ar.checkbox.value) continue;
+            var nm = trim(ar.nameEdit.text);
+            if (nm === "") nm = "asset_" + (i + 1);
+            selectedAssets.push({ name: nm, item: ar.item });
+        }
+        if (selectedAssets.length === 0) {
+            alert("Selecione pelo menos um asset para continuar.");
+            return;
+        }
+
+        // Valida cores
+        var colors = [];
+        for (var i = 0; i < colorRows.length; i++) {
+            var cr = colorRows[i];
+            if (!cr.active) continue;
+            var cName  = trim(cr.nameEdit.text);
+            var cValue = trim(cr.valueEdit.text);
+            if (cName === "" || cValue === "") continue;
+
+            var colorObj = null;
+            if (cValue.charAt(0) === "#") {
+                var rgb = hexToRGB(cValue);
+                if (!rgb) { alert("Cor HEX inválida: \"" + cValue + "\"\nUse o formato #RRGGBB ou #RGB."); return; }
+                colorObj = makeRGBColor(rgb.red, rgb.green, rgb.blue);
+            } else {
+                var parts = cValue.split(",");
+                if (parts.length !== 4) { alert("CMYK inválido: \"" + cValue + "\"\nForneça 4 valores separados por vírgula: C,M,Y,K"); return; }
+                var cv = parseFloat(parts[0]);
+                var mv = parseFloat(parts[1]);
+                var yv = parseFloat(parts[2]);
+                var kv = parseFloat(parts[3]);
+                if (isNaN(cv)||isNaN(mv)||isNaN(yv)||isNaN(kv)) { alert("CMYK inválido: \"" + cValue + "\""); return; }
+                colorObj = makeCMYKColor(cv, mv, yv, kv);
+            }
+
+            var modeStr = "both";
+            if (cr.modeList.selection.index === 1) modeStr = "fill_only";
+            if (cr.modeList.selection.index === 2) modeStr = "stroke_only";
+
+            colors.push({ name: cName, color: colorObj, mode: modeStr });
+        }
+        if (colors.length === 0) {
+            alert("Adicione pelo menos uma cor válida para continuar.");
+            return;
+        }
+
+        var padding      = parseFloat(paddingEdit.text)  || 20;
+        var boardSpacing = parseFloat(spacingEdit.text)  || 40;
+
+        dlg.close();
+
+        // ── Salva posições originais dos assets ──────────────────
+
+        var originalPositions = [];
+        for (var ai = 0; ai < selectedAssets.length; ai++) {
+            originalPositions.push(selectedAssets[ai].item.position.slice());
+        }
+
+        // ── Remove pranchetas antigas ────────────────────────────
+
+        while (doc.artboards.length > 1) {
+            doc.artboards.remove(doc.artboards.length - 1);
+        }
+
+        // ── Calcula bounds de cada asset ─────────────────────────
+
+        var assetDimensions = [];
+        for (var ai = 0; ai < selectedAssets.length; ai++) {
+            var b  = selectedAssets[ai].item.geometricBounds;
+            // geometricBounds: [left, top, right, bottom]  (top > bottom em coords AI)
+            var w = Math.abs(b[2] - b[0]);
+            var h = Math.abs(b[1] - b[3]);
+            assetDimensions.push({ w: w, h: h, bounds: b });
+        }
+
+        // ── Gera pranchetas e duplicatas ─────────────────────────
+        // Layout: linhas = cores, colunas = assets
+
+        var artboardIndex = 0;
+        var rowTopY = 0; // acumula altura das linhas anteriores (em px positivos)
+
+        for (var ci = 0; ci < colors.length; ci++) {
+            var colorDef   = colors[ci];
+            var colLeftX   = 0;
+            var rowMaxH    = 0;
+
+            for (var ai = 0; ai < selectedAssets.length; ai++) {
+                var assetDef = selectedAssets[ai];
+                var dim      = assetDimensions[ai];
+
+                var abW = dim.w + padding * 2;
+                var abH = dim.h + padding * 2;
+
+                // Coordenadas AI: Y positivo = para cima
+                // Prancheta: left, top, right, bottom
+                var abLeft   =  colLeftX;
+                var abTop    = -(rowTopY);           // negativo pois Y sobe
+                var abRight  =  colLeftX + abW;
+                var abBottom = -(rowTopY + abH);
+
+                var abName = slugify(colorDef.name) + "_" + slugify(assetDef.name);
+
+                // Cria ou reusa prancheta
+                if (artboardIndex === 0) {
+                    doc.artboards[0].artboardRect = [abLeft, abTop, abRight, abBottom];
+                    doc.artboards[0].name = abName;
+                } else {
+                    var newAb = doc.artboards.add([abLeft, abTop, abRight, abBottom]);
+                    newAb.name = abName;
+                }
+
+                // Duplica o asset original
+                var dup = assetDef.item.duplicate();
+
+                // Posiciona: canto sup-esq da prancheta + padding
+                // position em AI = [left, top] do bounding box
+                dup.position = [abLeft + padding, abTop - padding];
+
+                // Aplica cor
+                applyColorToItem(dup, colorDef.color, colorDef.color, colorDef.mode);
+
+                artboardIndex++;
+                colLeftX += abW + boardSpacing;
+                if (abH > rowMaxH) rowMaxH = abH;
+            }
+
+            rowTopY += rowMaxH + boardSpacing;
+        }
+
+        // ── Feedback ─────────────────────────────────────────────
+
+        var total = colors.length * selectedAssets.length;
+        var msg   = "✔ Pranchetas geradas com sucesso!\n\n";
+        msg += "  • " + selectedAssets.length + " asset(s) × " + colors.length + " cor(es)\n";
+        msg += "  • " + total + " prancheta(s) no total\n\n";
+        msg += "Nomes gerados:\n";
+        for (var ci = 0; ci < colors.length; ci++) {
+            for (var ai = 0; ai < selectedAssets.length; ai++) {
+                msg += "   - " + slugify(colors[ci].name) + "_" + slugify(selectedAssets[ai].name) + "\n";
+            }
+        }
+        alert(msg);
+    };
+
+    // ── Abre o diálogo ────────────────────────────────────────────
+    dlg.show();
+
+})();

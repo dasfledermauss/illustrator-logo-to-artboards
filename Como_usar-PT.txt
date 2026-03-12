@@ -1,0 +1,242 @@
+=====================================================================
+  GERADOR DE PRANCHETAS DE LOGO POR COR — TUTORIAL DE USO
+  Script: logo_pranchetas_por_cor.jsx  |  Versão 1.0
+  Compatível com Adobe Illustrator CS6+
+=====================================================================
+
+
+─────────────────────────────────────────────────────────────────────
+  O QUE O SCRIPT FAZ
+─────────────────────────────────────────────────────────────────────
+
+  Você define seus assets de logo (ex: selo, completo, vertical,
+  horizontal) e as cores que quer gerar (ex: Preto, Branco, Azul).
+  O script cria automaticamente uma prancheta para cada combinação,
+  nomeada e organizada em grade:
+
+    Linha 1 → todas as pranchetas da cor 1
+    Linha 2 → todas as pranchetas da cor 2
+    ...
+
+  Cada prancheta tem o tamanho exato do asset + padding definido por
+  você, e é nomeada no formato:  NomeDaCor_NomeDoAsset
+  Exemplo: Preto_selo, Azul_Principal_horizontal, Branco_completo
+
+
+─────────────────────────────────────────────────────────────────────
+  PASSO 1 — PREPARAR O DOCUMENTO
+─────────────────────────────────────────────────────────────────────
+
+  Antes de rodar o script, organize seu arquivo .ai assim:
+
+  1. Cada asset do logo deve ser um item separado no documento.
+     Pode ser um Grupo, um Path ou um Compound Path.
+
+  2. Coloque cada asset em uma camada separada e dê um nome claro
+     à camada. O script usa o nome da camada como sugestão de nome
+     do asset. Exemplo:
+
+       Camada "selo"       → grupo com o asset do selo
+       Camada "horizontal" → grupo com a versão horizontal
+       Camada "vertical"   → grupo com a versão vertical
+       Camada "completo"   → grupo com a versão completa
+
+  3. Deixe todas as camadas visíveis. Camadas ocultas são ignoradas.
+
+  DICA: Se o item já tiver nome definido (via painel Camadas ou
+  propriedades do objeto), esse nome será sugerido automaticamente.
+
+
+─────────────────────────────────────────────────────────────────────
+  PASSO 2 — INSTALAR E RODAR O SCRIPT
+─────────────────────────────────────────────────────────────────────
+
+  OPÇÃO A — Rodar uma vez (sem instalação):
+
+    1. No Illustrator, vá em:
+       Arquivo > Scripts > Outro Script...
+
+    2. Localize o arquivo logo_pranchetas_por_cor.jsx e clique
+       em Abrir.
+
+  OPÇÃO B — Instalar para acesso permanente no menu:
+
+    1. Copie o arquivo .jsx para a pasta de scripts do Illustrator:
+
+       Windows:
+       C:\Program Files\Adobe\Adobe Illustrator [versão]\
+       Presets\pt_BR\Scripts\
+
+       Mac:
+       /Applications/Adobe Illustrator [versão]/
+       Presets/en_US/Scripts/
+
+    2. Reinicie o Illustrator.
+
+    3. O script vai aparecer em:
+       Arquivo > Scripts > logo_pranchetas_por_cor
+
+
+─────────────────────────────────────────────────────────────────────
+  PASSO 3 — USAR A JANELA DE DIÁLOGO
+─────────────────────────────────────────────────────────────────────
+
+  Ao rodar o script, uma janela abre com três seções:
+
+
+  [ SEÇÃO 1: Assets do Logo ]
+  ─────────────────────────
+  Lista todos os itens detectados no documento.
+
+  • Checkbox  → marque os assets que devem virar pranchetas.
+                Desmarque o que não quiser incluir.
+
+  • Nome      → edite o nome que aparecerá na prancheta.
+                Use nomes simples, sem espaços (ou com underscore).
+                Exemplos: selo, horizontal, vertical, completo
+
+  • Descrição → mostra o tipo do item e a camada de origem
+                (apenas para referência, não é editável).
+
+
+  [ SEÇÃO 2: Variantes de Cor ]
+  ──────────────────────────────
+  Define quantas versões coloridas serão geradas.
+
+  • Nome da cor → como a cor vai aparecer no nome da prancheta.
+                  Exemplos: Preto, Branco, Azul_Principal
+
+  • Valor       → a cor em si. Dois formatos aceitos:
+
+      HEX (RGB):   #003DA5   #FFFFFF   #1A1A1A
+      CMYK:        C,M,Y,K   → ex: 0,0,0,100  ou  100,50,0,0
+                   Valores de 0 a 100, separados por vírgula.
+
+  • Aplicar em  → escolha onde a cor será aplicada:
+      "Fill e Stroke"    → aplica em preenchimento e contorno
+      "Somente Fill"     → aplica apenas no preenchimento
+      "Somente Stroke"   → aplica apenas no contorno
+
+  • Botão [✕]   → remove aquela linha de cor.
+
+  • Botão [+ Adicionar Variante de Cor] → adiciona novas cores.
+    Não há limite de cores.
+
+
+  [ SEÇÃO 3: Opções de Layout ]
+  ─────────────────────────────
+  • Padding (px)                → espaço entre o asset e a borda
+                                  da prancheta. Padrão: 20px.
+
+  • Espaço entre pranchetas (px) → distância entre uma prancheta
+                                   e a próxima. Padrão: 40px.
+
+
+─────────────────────────────────────────────────────────────────────
+  PASSO 4 — GERAR AS PRANCHETAS
+─────────────────────────────────────────────────────────────────────
+
+  Após configurar tudo, clique em "▶ Gerar Pranchetas".
+
+  O script vai:
+
+  1. Remover as pranchetas existentes do documento.
+  2. Duplicar cada asset selecionado.
+  3. Criar uma prancheta para cada combinação cor × asset.
+  4. Posicionar e redimensionar cada prancheta ao tamanho exato
+     do asset + padding.
+  5. Aplicar as cores nas duplicatas conforme configurado.
+  6. Nomear cada prancheta no formato: NomeDaCor_NomeDoAsset.
+
+  Ao final, uma mensagem confirma quantas pranchetas foram geradas
+  e lista todos os nomes criados.
+
+
+─────────────────────────────────────────────────────────────────────
+  EXEMPLO PRÁTICO
+─────────────────────────────────────────────────────────────────────
+
+  Situação:
+    → 4 assets: selo, completo, vertical, horizontal
+    → 3 cores: Preto (0,0,0,100), Branco (0,0,0,0), Azul (#003DA5)
+
+  Resultado: 12 pranchetas geradas, organizadas assim:
+
+    [Preto_selo]  [Preto_completo]  [Preto_vertical]  [Preto_horizontal]
+    [Branco_selo] [Branco_completo] [Branco_vertical] [Branco_horizontal]
+    [Azul_selo]   [Azul_completo]   [Azul_vertical]   [Azul_horizontal]
+
+  Cada prancheta tem o tamanho exato do respectivo asset + padding.
+
+
+─────────────────────────────────────────────────────────────────────
+  DICAS E OBSERVAÇÕES
+─────────────────────────────────────────────────────────────────────
+
+  • Os assets originais NÃO são movidos nem alterados. O script
+    sempre trabalha com duplicatas.
+
+  • Para logos com múltiplas cores (ex: ícone colorido + texto),
+    o script aplica a cor definida em todos os paths do grupo.
+    Se quiser preservar cores internas, use "Somente Stroke" ou
+    desmarque o asset e organize manualmente depois.
+
+  • Nomes de pranchetas não aceitam caracteres especiais como
+    /  \  :  *  ?  "  <  >  |  — o script trata isso automaticamente.
+
+  • Se rodar o script mais de uma vez no mesmo documento, as
+    pranchetas anteriores são substituídas. As duplicatas geradas
+    anteriormente ficam no documento e precisam ser removidas
+    manualmente se não forem mais necessárias. Recomenda-se
+    trabalhar sempre a partir do arquivo original limpo.
+
+  • O modo de cor do documento (RGB ou CMYK) afeta como as cores
+    são exibidas. Use HEX para documentos RGB e C,M,Y,K para
+    documentos CMYK para resultados mais precisos.
+
+
+─────────────────────────────────────────────────────────────────────
+  SOLUÇÃO DE PROBLEMAS
+─────────────────────────────────────────────────────────────────────
+
+  "Nenhum item encontrado nas camadas."
+  → Verifique se as camadas estão visíveis (ícone de olho ativado).
+
+  "Cor HEX inválida."
+  → Use o formato #RRGGBB ou #RGB. Exemplo: #003DA5, #FFF.
+
+  "CMYK inválido."
+  → Forneça exatamente 4 números separados por vírgula, sem espaços.
+    Exemplo correto: 0,0,0,100     Exemplo errado: 0, 0, 0, 100
+
+  As pranchetas ficaram com tamanho errado.
+  → Certifique-se de que os assets estão agrupados corretamente.
+    Paths soltos dentro de uma camada com outros elementos podem
+    causar medições incorretas. Agrupe cada asset (Ctrl+G / Cmd+G)
+    antes de rodar o script.
+
+  A cor não foi aplicada em alguns elementos.
+  → Elementos como imagens rasterizadas (Place), símbolos e objetos
+    de malha não são afetados pela recoloração. O script recolore
+    apenas PathItems, CompoundPathItems e TextFrames.
+
+
+─────────────────────────────────────────────────────────────────────
+  REFERÊNCIA RÁPIDA — FORMATOS DE COR
+─────────────────────────────────────────────────────────────────────
+
+  Cor              HEX          CMYK
+  ─────────────    ─────────    ───────────
+  Preto            #000000      0,0,0,100
+  Branco           #FFFFFF      0,0,0,0
+  Cinza 50%        #808080      0,0,0,50
+  Azul Pantone 286 #003DA5      100,72,0,6
+  Vermelho         #FF0000      0,100,100,0
+  Verde            #00A651      85,0,75,0
+  Amarelo          #FFD700      0,14,100,0
+
+
+=====================================================================
+  Script criado com Adobe ExtendScript (JSX)
+  Compatível com Adobe Illustrator CS6, CC e versões mais recentes
+=====================================================================

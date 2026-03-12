@@ -1,0 +1,242 @@
+=====================================================================
+  LOGO ARTBOARD GENERATOR BY COLOR — USER GUIDE
+  Script: logo_pranchetas_por_cor.jsx  |  Version 1.0
+  Compatible with Adobe Illustrator CS6+
+=====================================================================
+
+
+─────────────────────────────────────────────────────────────────────
+  WHAT THE SCRIPT DOES
+─────────────────────────────────────────────────────────────────────
+
+  You define your logo assets (e.g. badge, full, vertical,
+  horizontal) and the color variants you want (e.g. Black, White,
+  Blue). The script automatically creates one artboard per
+  combination, named and organized in a grid:
+
+    Row 1 → all artboards for color 1
+    Row 2 → all artboards for color 2
+    ...
+
+  Each artboard is sized to fit the asset exactly (plus padding),
+  and is named using the format:  ColorName_AssetName
+  Examples: Black_badge, Blue_Primary_horizontal, White_full
+
+
+─────────────────────────────────────────────────────────────────────
+  STEP 1 — PREPARE YOUR DOCUMENT
+─────────────────────────────────────────────────────────────────────
+
+  Before running the script, organize your .ai file like this:
+
+  1. Each logo asset must be a separate item in the document.
+     It can be a Group, a Path, or a Compound Path.
+
+  2. Place each asset on its own layer and give it a clear name.
+     The script uses the layer name as the default asset name.
+     Example:
+
+       Layer "badge"      → group containing the badge asset
+       Layer "horizontal" → group containing the horizontal version
+       Layer "vertical"   → group containing the vertical version
+       Layer "full"       → group containing the full version
+
+  3. Make sure all layers are visible. Hidden layers are ignored.
+
+  TIP: If an item already has a name set (via the Layers panel or
+  object properties), that name will be suggested automatically.
+
+
+─────────────────────────────────────────────────────────────────────
+  STEP 2 — INSTALL AND RUN THE SCRIPT
+─────────────────────────────────────────────────────────────────────
+
+  OPTION A — Run once (no installation):
+
+    1. In Illustrator, go to:
+       File > Scripts > Other Script...
+
+    2. Locate logo_pranchetas_por_cor.jsx and click Open.
+
+
+  OPTION B — Install for permanent access in the menu:
+
+    1. Copy the .jsx file to Illustrator's scripts folder:
+
+       Windows:
+       C:\Program Files\Adobe\Adobe Illustrator [version]\
+       Presets\en_US\Scripts\
+
+       Mac:
+       /Applications/Adobe Illustrator [version]/
+       Presets/en_US/Scripts/
+
+    2. Restart Illustrator.
+
+    3. The script will appear under:
+       File > Scripts > logo_pranchetas_por_cor
+
+
+─────────────────────────────────────────────────────────────────────
+  STEP 3 — USING THE DIALOG WINDOW
+─────────────────────────────────────────────────────────────────────
+
+  When the script runs, a dialog window opens with three sections:
+
+
+  [ SECTION 1: Logo Assets ]
+  ───────────────────────────
+  Lists all items detected in the document.
+
+  • Checkbox    → check the assets you want to turn into artboards.
+                  Uncheck anything you want to exclude.
+
+  • Name        → edit the name that will appear in the artboard.
+                  Use simple names, no spaces (or use underscores).
+                  Examples: badge, horizontal, vertical, full
+
+  • Description → shows the item type and source layer
+                  (for reference only, not editable).
+
+
+  [ SECTION 2: Color Variants ]
+  ──────────────────────────────
+  Defines how many color versions will be generated.
+
+  • Color name  → how the color will appear in the artboard name.
+                  Examples: Black, White, Primary_Blue
+
+  • Value       → the actual color. Two formats accepted:
+
+      HEX (RGB):   #003DA5   #FFFFFF   #1A1A1A
+      CMYK:        C,M,Y,K   → e.g. 0,0,0,100  or  100,50,0,0
+                   Values from 0 to 100, separated by commas.
+
+  • Apply to    → choose where the color will be applied:
+      "Fill & Stroke"   → applies to both fill and stroke
+      "Fill Only"       → applies to fill only
+      "Stroke Only"     → applies to stroke only
+
+  • [✕] button  → removes that color row.
+
+  • [+ Add Color Variant] button → adds more colors.
+    There is no limit on the number of colors.
+
+
+  [ SECTION 3: Layout Options ]
+  ──────────────────────────────
+  • Padding (px)               → space between the asset and the
+                                  artboard edge. Default: 20px.
+
+  • Space between artboards (px) → gap between artboards.
+                                   Default: 40px.
+
+
+─────────────────────────────────────────────────────────────────────
+  STEP 4 — GENERATE THE ARTBOARDS
+─────────────────────────────────────────────────────────────────────
+
+  Once everything is configured, click "▶ Generate Artboards".
+
+  The script will:
+
+  1. Remove all existing artboards from the document.
+  2. Duplicate each selected asset.
+  3. Create one artboard per color × asset combination.
+  4. Resize each artboard to fit the asset exactly + padding.
+  5. Apply the defined colors to each duplicate.
+  6. Name each artboard using the format: ColorName_AssetName.
+
+  When done, a confirmation message shows how many artboards were
+  created and lists all the names generated.
+
+
+─────────────────────────────────────────────────────────────────────
+  PRACTICAL EXAMPLE
+─────────────────────────────────────────────────────────────────────
+
+  Scenario:
+    → 4 assets: badge, full, vertical, horizontal
+    → 3 colors: Black (0,0,0,100), White (0,0,0,0), Blue (#003DA5)
+
+  Result: 12 artboards generated, laid out like this:
+
+    [Black_badge]  [Black_full]  [Black_vertical]  [Black_horizontal]
+    [White_badge]  [White_full]  [White_vertical]  [White_horizontal]
+    [Blue_badge]   [Blue_full]   [Blue_vertical]   [Blue_horizontal]
+
+  Each artboard is sized to fit its respective asset + padding.
+
+
+─────────────────────────────────────────────────────────────────────
+  TIPS AND NOTES
+─────────────────────────────────────────────────────────────────────
+
+  • Original assets are NOT moved or modified. The script always
+    works with duplicates.
+
+  • For logos with multiple colors (e.g. colored icon + text),
+    the script applies the chosen color to all paths in the group.
+    If you want to preserve internal colors, use "Stroke Only" or
+    uncheck that asset and arrange it manually afterward.
+
+  • Artboard names do not support special characters such as
+    /  \  :  *  ?  "  <  >  |  — the script handles this
+    automatically.
+
+  • If you run the script more than once on the same document,
+    existing artboards are replaced. Previously generated duplicates
+    remain in the document and must be deleted manually if no longer
+    needed. It is recommended to always work from a clean
+    original file.
+
+  • The document's color mode (RGB or CMYK) affects how colors
+    are displayed. Use HEX for RGB documents and C,M,Y,K for
+    CMYK documents for more accurate results.
+
+
+─────────────────────────────────────────────────────────────────────
+  TROUBLESHOOTING
+─────────────────────────────────────────────────────────────────────
+
+  "No items found in layers."
+  → Check that all layers are visible (eye icon turned on).
+
+  "Invalid HEX color."
+  → Use the #RRGGBB or #RGB format. Example: #003DA5, #FFF.
+
+  "Invalid CMYK."
+  → Provide exactly 4 numbers separated by commas, no spaces.
+    Correct: 0,0,0,100     Incorrect: 0, 0, 0, 100
+
+  Artboards ended up the wrong size.
+  → Make sure assets are properly grouped. Loose paths inside a
+    layer that also contains other elements may cause incorrect
+    measurements. Group each asset (Ctrl+G / Cmd+G) before running
+    the script.
+
+  Color was not applied to some elements.
+  → Rasterized images (Place), symbols, and mesh objects are not
+    affected by recoloring. The script only recolors PathItems,
+    CompoundPathItems, and TextFrames.
+
+
+─────────────────────────────────────────────────────────────────────
+  QUICK REFERENCE — COLOR FORMATS
+─────────────────────────────────────────────────────────────────────
+
+  Color                HEX          CMYK
+  ─────────────────    ─────────    ───────────
+  Black                #000000      0,0,0,100
+  White                #FFFFFF      0,0,0,0
+  50% Gray             #808080      0,0,0,50
+  Pantone 286 Blue     #003DA5      100,72,0,6
+  Red                  #FF0000      0,100,100,0
+  Green                #00A651      85,0,75,0
+  Yellow               #FFD700      0,14,100,0
+
+
+=====================================================================
+  Script built with Adobe ExtendScript (JSX)
+  Compatible with Adobe Illustrator CS6, CC and later versions
+=====================================================================
